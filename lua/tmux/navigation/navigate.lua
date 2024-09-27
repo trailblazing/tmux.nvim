@@ -1,8 +1,8 @@
-local layout = require("tmux.layout")
-local log = require("tmux.log")
-local nvim = require("tmux.wrapper.nvim")
-local options = require("tmux.configuration.options")
-local tmux = require("tmux.wrapper.tmux")
+local layout   = require("tmux.layout")
+local log      = require("tmux.log")
+local nvim     = require("tmux.wrapper.nvim")
+local options  = require("tmux.configuration.options")
+local tmux     = require("tmux.wrapper.tmux")
 
 local opposite_directions = {
     h = "l",

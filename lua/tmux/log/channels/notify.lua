@@ -13,11 +13,11 @@ function CTOR.create(notify_func, severity_map)
         M.severity_map = severity_map
     else
         M.severity_map = {
-            debug = vim.log.levels.DEBUG,
-            error = vim.log.levels.ERROR,
-            information = vim.log.levels.INFO,
-            trace = vim.log.levels.TRACE,
-            warning = vim.log.levels.WARN,
+            debug        = vim.log.levels.DEBUG,
+            error        = vim.log.levels.ERROR,
+            information  = vim.log.levels.INFO,
+            trace        = vim.log.levels.TRACE,
+            warning      = vim.log.levels.WARN,
         }
     end
 

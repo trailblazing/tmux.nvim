@@ -1,9 +1,9 @@
 local valid_severities = {
-    disabled = 0,
-    debug = 1,
-    information = 2,
-    warning = 3,
-    error = 4,
+    disabled     = 0,
+    debug        = 1,
+    information  = 2,
+    warning      = 3,
+    error        = 4,
 }
 
 local function validate(sev)
@@ -25,7 +25,7 @@ function M.check(barrier, sev)
     if barrier_priority == 0 then
         return false
     end
-    return barrier_priority <= valid_severities[sev]
+    return valid_severities[sev] <= barrier_priority
 end
 
 function M.validate(sev)

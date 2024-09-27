@@ -5,9 +5,9 @@ keymaps.register = function(scope, mappings, options)
     local opts
     if options == nil then
         opts = {
-            nowait = true,
-            silent = true,
-            noremap = true,
+            nowait   = true,
+            silent   = true,
+            noremap  = true,
         }
     else
         opts = options

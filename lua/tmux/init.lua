@@ -1,9 +1,9 @@
-local config = require("tmux.configuration")
-local copy = require("tmux.copy")
-local log = require("tmux.log")
-local navigation = require("tmux.navigation")
-local resize = require("tmux.resize")
-local tmux = require("tmux.wrapper.tmux")
+local config      = require("tmux.configuration")
+local copy        = require("tmux.copy")
+local log         = require("tmux.log")
+local navigation  = require("tmux.navigation")
+local resize      = require("tmux.resize")
+local tmux        = require("tmux.wrapper.tmux")
 
 local options = {
     copy_sync = {
@@ -18,23 +18,28 @@ local options = {
 }
 
 local M = {
-    move_left = navigation.to_left,
-    move_bottom = navigation.to_bottom,
-    move_top = navigation.to_top,
-    move_right = navigation.to_right,
+    move_left       = navigation.to_left,
+    move_bottom     = navigation.to_bottom,
+    move_top        = navigation.to_top,
+    move_right      = navigation.to_right,
 
-    post_yank = copy.post_yank,
-    sync_registers = copy.sync_registers,
+    post_yank       = copy.post_yank,
+    sync_registers  = copy.sync_registers,
 
-    resize_left = resize.to_left,
-    resize_bottom = resize.to_bottom,
-    resize_top = resize.to_top,
-    resize_right = resize.to_right,
+    resize_left     = resize.to_left,
+    resize_bottom   = resize.to_bottom,
+    resize_top      = resize.to_top,
+    resize_right    = resize.to_right,
 }
 
-function M.setup(options_, logging)
-    if options_ then
-        for k, v in pairs(options_) do
+function M.setup(opts, logging)
+
+    -- print("init:package.path", serialize(package.path))
+    -- print("init:logging", vim.inspect(logging))
+    -- print("init:opts",    vim.inspect(opts))
+
+    if opts then
+        for k, v in pairs(opts) do
             options[k] = v
         end
     end

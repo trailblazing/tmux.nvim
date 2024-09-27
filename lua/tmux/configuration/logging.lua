@@ -1,6 +1,6 @@
 local M = {
-    file = "warning",
-    notify = "warning",
+    file    = "warning",
+    notify  = "warning",
 }
 
 function M.set(options)
@@ -8,7 +8,9 @@ function M.set(options)
         return
     end
     for index, _ in pairs(options) do
+        -- print("logging: " .. index, options[index])
         if require("tmux.log.severity").validate(options[index]) then
+            -- print("logging: " .. index, options[index])
             M[index] = options[index]
         end
     end

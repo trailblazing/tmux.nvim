@@ -36,7 +36,7 @@ local M = {
         register_offset = 0,
 
         -- overwrites vim.g.clipboard to redirect * and + to the system
-        -- clipboard using tmux. If you sync your system clipboard without tmux,
+        -- clipboard using tmux. If your keep nvim syncing directly to the system clipboard without using tmux,
         -- disable this option!
         sync_clipboard = true,
 

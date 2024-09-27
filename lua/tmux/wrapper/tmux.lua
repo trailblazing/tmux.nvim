@@ -18,21 +18,28 @@ local function get_tmux_pane()
 end
 
 local function get_socket()
-    return vim.split(get_tmux(), ",")[1]
+    return vim.split(get_tmux(), ',')[1]
 end
 
-local function execute(arg, pre)
-    local command = string.format("%s tmux -S %s %s", pre or "", get_socket(), arg)
+local function execute(arg, pre, raw)
+    local command = string.format("%s /usr/bin/tmux -S '%s' %s", pre or "", get_socket(), arg)
 
     local handle = assert(io.popen(command), string.format("unable to execute: [%s]", command))
-    local result = handle:read("*a")
+    local result = assert(handle:read('*all'))
     handle:close()
+
+    if raw then return result end
+
+    result = string.gsub(result, '^%s+',    '')
+    result = string.gsub(result, '%s+$',    '')
+    result = string.gsub(result, '[\n\r]+', ' ')
 
     return result
 end
 
 local function get_version()
-    local result = execute("-V")
+    local result = execute('-V')
+    if result == nil then return 0.0 end
     local version = result:sub(result:find(" ") + 1)
 
     return version:gsub("[^%.%w]", "")
@@ -55,6 +62,24 @@ function M.setup()
 
     log.debug(M.version)
 
+    vim.api.nvim_create_autocmd({ 'VimEnter', 'VimResume', 'FocusGained', 'BufEnter' }, {
+        group = vim.api.nvim_create_augroup("tmux_is_vim_vimenter", { clear = true }),
+        pattern = { "*" },
+        callback = function()
+            execute(string.format("set-option -p -t '%s' '@%s' %s", get_tmux_pane(), 'is-vim', 'on'))
+        end,
+    })
+    vim.api.nvim_create_autocmd({ 'VimLeave', 'VimSuspend' }, {
+        group = vim.api.nvim_create_augroup("tmux_is_vim_vimleave", { clear = true }),
+        pattern = { "*" },
+        callback = function()
+            execute(string.format("set-option -p -u -t '%s' '@%s'", get_tmux_pane(), 'is-vim'))
+            -- execute(string.format("set-option -p -t '%s' '@%s' %s", get_tmux_pane(), 'is-vim', 'false'))
+        end,
+    })
+
+    -- vim.print('autocmd set')
+
     return true
 end
 
@@ -63,11 +88,11 @@ function M.change_pane(direction)
 end
 
 function M.get_buffer(name)
-    return execute(string.format("show-buffer -b %s", name))
+    return execute(string.format("show-buffer -b '%s'", name))
 end
 
 function M.get_buffer_names()
-    local buffers = execute([[ list-buffers -F "#{buffer_name}" ]])
+    local buffers = execute([[ list-buffers -F '#{buffer_name}' ]], '', true)
 
     local result = {}
     for line in buffers:gmatch("([^\n]+)\n?") do
@@ -95,14 +120,24 @@ end
 
 function M.set_buffer(content, sync_clipboard)
     content = content:gsub("\\", "\\\\")
-    content = content:gsub('"', '\\"')
-    content = content:gsub("`", "\\`")
+    content = content:gsub('"',  '\\"')
+    content = content:gsub("`",  "\\`")
     content = content:gsub("%$", "\\$")
 
     if sync_clipboard ~= nil and sync_clipboard then
         execute("load-buffer -w -", string.format('printf "%%s" "%s" | ', content))
     else
-        execute("load-buffer -", string.format('printf "%%s" "%s" | ', content))
+        execute("load-buffer -",    string.format('printf "%%s" "%s" | ', content))
+    end
+    local display_value = execute([[show-option -gqv '@display-value']])
+    -- local display_value_with_new_line = execute([[show-option -gqv '@display-value']], '', true)
+    -- if display_value_with_new_line ~= "" then -- always is true
+    if display_value ~= "" then
+        -- log.debug('@display-value: "' .. display_value_with_new_line .. '"')
+        -- print('@display-value', '"' .. display_value_with_new_line .. '"')
+        log.debug('@display-value [no new line]: "' .. display_value .. '"')
+        -- print('@display-value [no new line]', '"' .. display_value .. '"')
+        execute("save-buffer - | " .. execute([[display -p '#{copy-command}']], '', true))
     end
 end
 

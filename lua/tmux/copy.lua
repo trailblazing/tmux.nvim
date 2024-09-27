@@ -1,13 +1,15 @@
-local options = require("tmux.configuration.options")
-local keymaps = require("tmux.keymaps")
-local log = require("tmux.log")
-local tmux = require("tmux.wrapper.tmux")
+local options  = require("tmux.configuration.options")
+local keymaps  = require("tmux.keymaps")
+local log      = require("tmux.log")
+local tmux     = require("tmux.wrapper.tmux")
 
 local function rtc(str)
     return vim.api.nvim_replace_termcodes(str, true, true, true)
 end
 
 local function sync_register(index, buffer_name)
+    -- vim.print('buffer_name: ' .. buffer_name)
+    if buffer_name == nil or buffer_name == "" then return end
     vim.fn.setreg(index, tmux.get_buffer(buffer_name))
 end
 
@@ -18,10 +20,17 @@ local function sync_unnamed_register(buffer_name)
 end
 
 local function sync_registers(passed_key)
-    log.debug(string.format("sync_registers: %s", tostring(passed_key)))
+    -- if type(passed_key) ~= "string" then return end
+    if type(passed_key) ~= "string" then
+        -- print("passed_key",  vim.inspect(passed_key))
+        -- print("vim.v.event", vim.inspect(vim.v.event))
+        return
+    else
+        log.debug(string.format("sync_registers: %s", tostring(passed_key)))
+    end
 
-    local ignore_buffers = options.copy_sync.ignore_buffers
-    local offset = options.copy_sync.register_offset
+    local ignore_buffers  = options.copy_sync.ignore_buffers
+    local offset          = options.copy_sync.register_offset
 
     log.debug("ignore_buffers: ", ignore_buffers)
 
@@ -65,8 +74,27 @@ local function resolve_content(regtype, regcontents)
     return result
 end
 
+local function post_yank(content)
+    if content.regname == nil then return end
+
+    if content.regcontents == nil or content.regcontents == "" then
+        return
+    end
+
+    if content.operator ~= "y" and not options.copy_sync.sync_deletes then
+        return
+    end
+
+    local buffer_content = resolve_content(content.regtype, content.regcontents)
+    -- vim.print('buffer_content: ' .. buffer_content)
+    log.debug(buffer_content)
+
+    tmux.set_buffer(buffer_content, options.copy_sync.redirect_to_clipboard)
+end
+
 local M = {
     sync_registers = sync_registers,
+    post_yank      = post_yank,
 }
 
 function M.setup()
@@ -75,20 +103,31 @@ function M.setup()
     end
 
     if options.copy_sync.sync_registers then
-        vim.cmd([[
-            if !exists("tmux_autocommands_loaded")
-                let tmux_autocommands_loaded = 1
-                let PostYank = luaeval('require("tmux").post_yank')
-                let SyncRegisters = luaeval('require("tmux").sync_registers')
-                autocmd TextYankPost * call PostYank(v:event)
-                autocmd CmdlineEnter * call SyncRegisters()
-                autocmd CmdwinEnter : call SyncRegisters()
-                autocmd VimEnter * call SyncRegisters()
-            endif
-        ]])
+
+        vim.api.nvim_create_autocmd({ "TextYankPost" }, {
+            group    = vim.api.nvim_create_augroup("tmux_text_yank_post", { clear = true }),
+            pattern  = { "*" },
+            callback = function()
+                -- [TextYankPost not setting v:event key regcontents (nor any other keys for TextYankPost) #2535](https://github.com/nvim-tree/nvim-tree.lua/issues/2535)
+                post_yank(vim.v.event)
+            end,
+        })
+
+        vim.api.nvim_create_autocmd({ "CmdwinEnter" }, {
+            group    = vim.api.nvim_create_augroup("tmux_cmdwin_enter", { clear = true }),
+            pattern  = { ":" },
+            callback = sync_registers,
+        })
+
+        vim.api.nvim_create_autocmd({ "CmdlineEnter", "VimEnter" }, {
+            group    = vim.api.nvim_create_augroup("tmux_sync_registers", { clear = true }),
+            pattern  = { "*" },
+            callback = sync_registers,
+        })
 
         _G.tmux = {
             sync_registers = sync_registers,
+            post_yank      = post_yank,
         }
 
         keymaps.register("n", {
@@ -96,8 +135,8 @@ function M.setup()
             ["p"] = [[v:lua.tmux.sync_registers('p')]],
             ["P"] = [[v:lua.tmux.sync_registers('P')]],
         }, {
-            expr = true,
-            noremap = true,
+            expr     = true,
+            noremap  = true,
         })
 
         -- double C-r to prevent injection:
@@ -105,19 +144,24 @@ function M.setup()
         keymaps.register("i", {
             ["<C-r>"] = [[v:lua.tmux.sync_registers("<C-r><C-r>")]],
         }, {
-            expr = true,
-            noremap = true,
+            expr     = true,
+            noremap  = true,
         })
 
         keymaps.register("c", {
             ["<C-r>"] = [[v:lua.tmux.sync_registers("<C-r><C-r>")]],
         }, {
-            expr = true,
-            noremap = true,
+            expr     = true,
+            noremap  = true,
         })
     end
 
     if options.copy_sync.sync_clipboard then
+        vim.cmd[[
+        if exists('g:clipboard')
+            :unlet g:clipboard
+        endif
+        ]]
         vim.g.clipboard = {
             name = "tmuxclipboard",
             copy = {
@@ -129,23 +173,16 @@ function M.setup()
                 ["*"] = "tmux save-buffer -",
             },
         }
+        vim.cmd[[
+        if exists('g:loaded_clipboard_provider')
+            :unlet g:loaded_clipboard_provider
+            " :source  autoload/provider/clipboard.vim
+            :source  /usr/share/nvim/runtime/autoload/provider/clipboard.vim
+            " :runtime autoload/provider/clipboard.vim
+            :runtime /usr/share/nvim/runtime/autoload/provider/clipboard.vim
+        endif
+        ]]
     end
-end
-
-function M.post_yank(content)
-    if content.regname ~= "" then
-        return
-    end
-
-    if content.operator ~= "y" and not options.copy_sync.sync_deletes then
-        return
-    end
-
-    local buffer_content = resolve_content(content.regtype, content.regcontents)
-
-    log.debug(buffer_content)
-
-    tmux.set_buffer(buffer_content, options.copy_sync.redirect_to_clipboard)
 end
 
 return M

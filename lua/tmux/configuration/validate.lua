@@ -1,5 +1,5 @@
-local version = require("tmux.version")
-local log = require("tmux.log")
+local version  = require("tmux.version")
+local log      = require("tmux.log")
 
 local M = {}
 function M.options(tmux_version, options)

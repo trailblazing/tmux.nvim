@@ -12,11 +12,11 @@ function M.parse(display)
     local panes = {}
     for pane in display:gmatch("(%d+x%d+,%d+,%d+,%d+)") do
         table.insert(panes, {
-            id = tonumber(pane:match("%d+x%d+,%d+,%d+,(%d+)")),
-            x = tonumber(pane:match("%d+x%d+,(%d+),%d+,%d+")),
-            y = tonumber(pane:match("%d+x%d+,%d+,(%d+),%d+")),
-            width = tonumber(pane:match("(%d+)x%d+")),
-            height = tonumber(pane:match("%d+x(%d+)")),
+            id      = tonumber(pane:match("%d+x%d+,%d+,%d+,(%d+)")),
+            x       = tonumber(pane:match("%d+x%d+,(%d+),%d+,%d+")),
+            y       = tonumber(pane:match("%d+x%d+,%d+,(%d+),%d+")),
+            width   = tonumber(pane:match("(%d+)x%d+")),
+            height  = tonumber(pane:match("%d+x(%d+)")),
         })
     end
     if #panes == 0 then
@@ -24,8 +24,8 @@ function M.parse(display)
         return nil
     end
 
-    local width = display:match("^%w+,(%d+)x%d+")
-    local height = display:match("^%w+,%d+x(%d+)")
+    local width   = display:match("^%w+,(%d+)x%d+")
+    local height  = display:match("^%w+,%d+x(%d+)")
 
     if width == nil and height == nil then
         log.error("window_layout returned invalid format")
@@ -33,8 +33,8 @@ function M.parse(display)
     end
 
     local result = {
-        width = tonumber(width),
-        height = tonumber(height),
+        width   = tonumber(width),
+        height  = tonumber(height),
         panes = panes,
     }
 

@@ -15,7 +15,11 @@ end
 
 local M = {}
 function M.setup()
+    -- print('log setup performing')
+    local log_address = require("tmux.log.channels.file").log_init()
+    print('tmux.nvim log_address', log_address)
     channels.add("file", function(sev, msg)
+        -- require('log').debug("tmux.log.channels.file will be required")
         require("tmux.log.channels.file").write(sev, msg)
     end)
 

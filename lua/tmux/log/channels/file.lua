@@ -22,13 +22,13 @@ function M.log_init()
 end
 
 function M.write(sev, message)
-    -- local logs = io.open(get_logdir() .. "tmux.nvim.log", "a")
+    --  local logs = io.open(get_logdir() .. "tmux.nvim.log", "a")
     local logs = io.open(M.log_address, "a")
-    -- logs:write(require("tmux.log.time").now() .. " " .. sev .. " ")
+    --  logs:write(require("tmux.log.time").now() .. " " .. sev .. " ")
     logs:write(tostring(message) .. "\n")
     logs:flush()
     logs:close()
-    -- io.close(logs)
+    --  io.close(logs)
 end
 
 return M

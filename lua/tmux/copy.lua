@@ -1,4 +1,4 @@
-local options  = require("tmux.configuration.options")
+local options  = require("tmux.configuration").options
 local keymaps  = require("tmux.keymaps")
 local log      = require("tmux.log")
 local tmux     = require("tmux.wrapper.tmux")
@@ -8,7 +8,7 @@ local function rtc(str)
 end
 
 local function sync_register(index, buffer_name)
-    -- vim.print('buffer_name: ' .. buffer_name)
+    --  vim.print('buffer_name: ' .. buffer_name)
     if buffer_name == nil or buffer_name == "" then return end
     vim.fn.setreg(index, tmux.get_buffer(buffer_name))
 end
@@ -20,10 +20,10 @@ local function sync_unnamed_register(buffer_name)
 end
 
 local function sync_registers(passed_key)
-    -- if type(passed_key) ~= "string" then return end
+    --  if type(passed_key) ~= "string" then return end
     if type(passed_key) ~= "string" then
-        -- print("passed_key",  vim.inspect(passed_key))
-        -- print("vim.v.event", vim.inspect(vim.v.event))
+        --  print("passed_key",  vim.inspect(passed_key))
+        --  print("vim.v.event", vim.inspect(vim.v.event))
         return
     else
         log.debug(string.format("sync_registers: %s", tostring(passed_key)))
@@ -86,7 +86,7 @@ local function post_yank(content)
     end
 
     local buffer_content = resolve_content(content.regtype, content.regcontents)
-    -- vim.print('buffer_content: ' .. buffer_content)
+    --  vim.print('buffer_content: ' .. buffer_content)
     log.debug(buffer_content)
 
     tmux.set_buffer(buffer_content, options.copy_sync.redirect_to_clipboard)
@@ -108,7 +108,7 @@ function M.setup()
             group    = vim.api.nvim_create_augroup("tmux_text_yank_post", { clear = true }),
             pattern  = { "*" },
             callback = function()
-                -- [TextYankPost not setting v:event key regcontents (nor any other keys for TextYankPost) #2535](https://github.com/nvim-tree/nvim-tree.lua/issues/2535)
+                --  [TextYankPost not setting v:event key regcontents (nor any other keys for TextYankPost) #2535](https://github.com/nvim-tree/nvim-tree.lua/issues/2535)
                 post_yank(vim.v.event)
             end,
         })
@@ -139,8 +139,8 @@ function M.setup()
             noremap  = true,
         })
 
-        -- double C-r to prevent injection:
-        -- https://vim.fandom.com/wiki/Pasting_registers#In_insert_and_command-line_modes
+        --  double C-r to prevent injection:
+        --  https://vim.fandom.com/wiki/Pasting_registers#In_insert_and_command-line_modes
         keymaps.register("i", {
             ["<C-r>"] = [[v:lua.tmux.sync_registers("<C-r><C-r>")]],
         }, {

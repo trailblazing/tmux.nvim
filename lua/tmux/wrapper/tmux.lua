@@ -1,3 +1,9 @@
+
+local function file_exists(name)
+    local f = io.open(name, "r")
+    if f ~= nil then io.close(f) return true else return false end
+end
+
 local vim = vim
 
 local log = require("tmux.log")
@@ -46,16 +52,25 @@ local function get_version()
 end
 
 local M = {
-    is_tmux = false,
+    is_tmux        = false,
+    get_tmux       = get_tmux,
+    get_version    = get_version,
+    execute        = execute,
+    get_tmux_pane  = get_tmux_pane,
+    file_exists    = file_exists,
 }
 
-function M.setup()
+function M.setup(options)
     M.is_tmux = get_tmux() ~= nil
 
     log.debug(M.is_tmux)
 
     if not M.is_tmux then
         return false
+    end
+
+    if file_exists(options.tmux.conf) == false then
+        vim.notify("Does not exist " .. options.tmux.conf)
     end
 
     M.version = get_version()
@@ -69,16 +84,16 @@ function M.setup()
             execute(string.format("set-option -p -t '%s' '@%s' %s", get_tmux_pane(), 'is-vim', 'on'))
         end,
     })
-    vim.api.nvim_create_autocmd({ 'VimLeave', 'VimSuspend' }, {
+
+    vim.api.nvim_create_autocmd({ "VimLeave", 'VimSuspend' }, {
         group = vim.api.nvim_create_augroup("tmux_is_vim_vimleave", { clear = true }),
         pattern = { "*" },
-        callback = function()
+        callback = function(args)
             execute(string.format("set-option -p -u -t '%s' '@%s'", get_tmux_pane(), 'is-vim'))
-            -- execute(string.format("set-option -p -t '%s' '@%s' %s", get_tmux_pane(), 'is-vim', 'false'))
         end,
     })
 
-    -- vim.print('autocmd set')
+    --  vim.print('autocmd set')
 
     return true
 end
@@ -130,13 +145,13 @@ function M.set_buffer(content, sync_clipboard)
         execute("load-buffer -",    string.format('printf "%%s" "%s" | ', content))
     end
     local display_value = execute([[show-option -gqv '@display-value']])
-    -- local display_value_with_new_line = execute([[show-option -gqv '@display-value']], '', true)
-    -- if display_value_with_new_line ~= "" then -- always is true
+    --  local display_value_with_new_line = execute([[show-option -gqv '@display-value']], '', true)
+    --  if display_value_with_new_line ~= "" then --  always is true
     if display_value ~= "" then
-        -- log.debug('@display-value: "' .. display_value_with_new_line .. '"')
-        -- print('@display-value', '"' .. display_value_with_new_line .. '"')
+        --  log.debug('@display-value: "' .. display_value_with_new_line .. '"')
+        --  print('@display-value', '"' .. display_value_with_new_line .. '"')
         log.debug('@display-value [no new line]: "' .. display_value .. '"')
-        -- print('@display-value [no new line]', '"' .. display_value .. '"')
+        --  print('@display-value [no new line]', '"' .. display_value .. '"')
         execute("save-buffer - | " .. execute([[display -p '#{copy-command}']], '', true))
     end
 end

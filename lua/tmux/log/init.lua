@@ -15,6 +15,7 @@ local function log(severity, message, obj)
 end
 
 local M = {}
+
 function M.setup(logging)
 	--  print('log setup performing')
 	local log_address = require("tmux.log.channels.file").log_init()

@@ -64,6 +64,12 @@ function M.is_border(direction)
 
     log.debug("is_border > ", result or "false")
 
+	if result then
+		tmux.execute(string.format("set-option -p -t '%s' '@%s' %s", tmux.get_tmux_pane(), 'is-border', 'on'))
+	else
+		tmux.execute(string.format("set-option -p -u -t '%s' '@%s'", tmux.get_tmux_pane(), 'is-border'))
+	end
+
     return result
 end
 

@@ -1,5 +1,5 @@
 local file     = require("tmux.prefix.file")
-local options  = require("tmux.configuration").options
+local options  = require("tmux.configuration.options")
 local tmux     = require("tmux.wrapper.tmux")
 local config   = require("tmux.configuration")
 
@@ -17,7 +17,7 @@ function M.setup()
 		vim.notify("Does not exist " .. options.prefix.wincmd)
 	end
 
-	file.init()
+	file.init(file.event)
 
 	file.prefix_toggle()
 

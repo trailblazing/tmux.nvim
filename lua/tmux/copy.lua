@@ -1,4 +1,4 @@
-local options  = require("tmux.configuration").options
+local options  = require("tmux.configuration.options")
 local keymaps  = require("tmux.keymaps")
 local log      = require("tmux.log")
 local tmux     = require("tmux.wrapper.tmux")
@@ -37,7 +37,7 @@ local function sync_registers(passed_key)
     local first_buffer_name = ""
     for k, v in ipairs(tmux.get_buffer_names()) do
         log.debug("buffer to sync: ", v)
-        if not ignore_buffers[v] then
+        if ignore_buffers ~= nil and not ignore_buffers[v] then
             log.debug("buffer is syncing: ", v)
             if k == 1 then
                 first_buffer_name = v
@@ -165,8 +165,9 @@ function M.setup()
         vim.g.clipboard = {
             name = "tmuxclipboard",
             copy = {
-                ["+"] = "tmux load-buffer -w -",
-                ["*"] = "tmux load-buffer -w -",
+				--  https://github.com/neovim/neovim/blob/master/runtime/autoload/provider/clipboard.vim
+                ["+"] = "tmux load-buffer -w -", --  tmux 3.2 and later
+                ["*"] = "tmux load-buffer -w -", --  tmux 3.2 and later
             },
             paste = {
                 ["+"] = "tmux save-buffer -",

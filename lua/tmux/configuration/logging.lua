@@ -4,11 +4,13 @@
 --      notify  = "warning",
 --  }
 
-function M.set(options)
+function M.set(result, options)
     if options == nil or options == "" then
         return
     end
-	local result = {}
+	if result == nil or result == "" then
+		result = {} --  local result = {}
+    end
     for index, _ in pairs(options) do
         --  print("logging: " .. index, options[index])
         if require("tmux.log.severity").validate(options[index]) then

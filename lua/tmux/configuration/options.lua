@@ -1,28 +1,30 @@
-local function copy(source, target)
-	if source == nil or target == nil then
+local function copy(target, preferences)
+	if target == nil or preferences == nil then
 		return
 	end
-	for index, _ in pairs(source) do
-		if target[index] ~= nil and type(source[index]) == "table" and type(target[index]) == "table" then
-			copy(source[index], target[index])
-		elseif target[index] ~= nil and type(source[index]) == type(target[index]) then
-			source[index] = target[index]
+	for index, _ in pairs(target) do
+		if preferences[index] ~= nil and type(target[index]) == "table" and type(preferences[index]) == "table" then
+			copy(target[index], preferences[index])
+		elseif preferences[index] ~= nil and type(target[index]) == type(preferences[index]) then
+			target[index] = preferences[index]
 		end
 	end
-	for index, _ in pairs(target) do
-		if target[index] ~= nil and source[index] == nil then
-			source[index] = target[index]
+	for index, _ in pairs(preferences) do
+		if preferences[index] ~= nil and target[index] == nil then
+			target[index] = preferences[index]
 		end
 	end
 end
 
 local M = {
+	--  Package manager corresponding file address for this plugin
+	--  user_preferences = "",
 	copy_sync = {
-		--  enables copy sync. by default, all registers are synchronized.
+		--  Enables copy sync. by default, all registers are synchronized.
 		--  to control which registers are synced, see the `sync_*` options.
-		enable = false,
+		enable = true, --  false,
 
-		--  ignore specific tmux buffers e.g. buffer0 = true to ignore the
+		--  Ignore specific tmux buffers e.g. buffer0 = true to ignore the
 		--  first buffer or named_buffer_name = true to ignore a named tmux
 		--  buffer with name named_buffer_name :)
 		ignore_buffers = { empty = false },
@@ -31,30 +33,32 @@ local M = {
 		--  clipboard by tmux
 		redirect_to_clipboard = false,
 
-		--  offset controls where register sync starts
+		--  Offset controls where register sync starts
 		--  e.g. offset 2 lets registers 0 and 1 untouched
 		register_offset = 0,
 
-		--  overwrites vim.g.clipboard to redirect * and + to the system
+		--  Overwrites vim.g.clipboard to redirect * and + to the system
 		--  clipboard using tmux. If your keep nvim syncing directly to the system clipboard without using tmux,
 		--  disable this option!
 		sync_clipboard = true,
 
-		--  synchronizes registers *, +, unnamed, and 0 till 9 with tmux buffers.
+		--  Synchronizes registers *, +, unnamed, and 0 till 9 with tmux buffers.
 		sync_registers = true,
 
-		--  syncs deletes with tmux clipboard as well, it is adviced to
+		--  Syncs deletes with tmux clipboard as well, it is adviced to
 		--  do so. Nvim does not allow syncing registers 0 and 1 without
 		--  overwriting the unnamed register. Thus, ddp would not be possible.
 		sync_deletes = true,
 
-		--  syncs the unnamed register with the first buffer entry from tmux.
+		--  Syncs the unnamed register with the first buffer entry from tmux.
 		sync_unnamed = true,
 	},
 
 	tmux = {
-		conf = os.getenv("HOME") .. "/.tmux.conf",
-        header  = os.getenv("XDG_CONFIG_HOME") .. "/tmux/header.conf",
+		--  conf = os.getenv("HOME") .. "/.tmux.conf",
+		--  Reference implementation. Not essential to this plugin
+		conf    = os.getenv("XDG_CONFIG_HOME") .. "/tmux/tmux.conf",
+		header  = os.getenv("XDG_CONFIG_HOME") .. "/tmux/header.conf",
 	},
 
 	prefix = {
@@ -70,38 +74,43 @@ local M = {
 		--  The background color value indicating entering copy-mode when nvim background is dark
 		normal_background   = "colour003",
 		--  The background color value indicating entering prefix "mode" when vim background is light
-        prefix_bg_on_light  = "#d7d700",
+		prefix_bg_on_light  = "#d7d7ff",
 		--  The background color value indicating entering copy-mode when nvim background is light
-        normal_bg_on_light  = "colour003",
+		normal_bg_on_light  = "colour003",
 	},
 
 	navigation = {
 		conf    = os.getenv("XDG_CONFIG_HOME") .. "/tmux/navigation.conf",
-		--  cycles to opposite pane while navigating into the border
+		--  Cycles to opposite pane while navigating into the border
 		cycle_navigation = true,
 
-		--  enables default keybindings (C-hjkl) for normal mode
+		--  Enables default keybindings (C-hjkl) for normal mode
 		enable_default_keybindings = false,
 
-		--  prevents unzoom tmux when navigating beyond vim border
+		--  Prevents unzoom tmux when navigating beyond vim border
 		persist_zoom = false,
 	},
 
 	resize = {
 		conf    = os.getenv("XDG_CONFIG_HOME") .. "/tmux/resize.conf",
-		--  enables default keybindings (A-hjkl) for normal mode
+		--  Enables default keybindings (A-hjkl) for normal mode
 		enable_default_keybindings = false,
 
-		--  sets resize steps for x axis
+		--  Sets resize steps for x axis
 		resize_step_x = 5,
 
-		--  sets resize steps for y axis
+		--  Sets resize steps for y axis
 		resize_step_y = 2,
 	},
 
 	logging = {
-    	file    = "warning",
-    	notify  = "warning",
+		--  log_address = vim.fn.stdpath("cache") .. "/tmux.nvim.log",
+		--  file    = "warning",
+			file    = "disabled",
+		--  file    = "debug", --  For development
+		--  notify  = "warning",
+		--  notify  = "debug",
+			notify  = "disabled",
 	},
 }
 
@@ -110,6 +119,7 @@ function M.set(options)
 		return
 	end
 	copy(M, options)
+	return M
 end
 
 return M

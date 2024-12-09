@@ -1,6 +1,6 @@
 local keymaps   = require("tmux.keymaps")
 local navigate  = require("tmux.navigation.navigate")
-local options   = require("tmux.configuration").options
+local options   = require("tmux.configuration.options")
 local tmux      = require("tmux.wrapper.tmux")
 
 local M = {}

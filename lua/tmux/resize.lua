@@ -1,7 +1,7 @@
 local layout   = require("tmux.layout")
 local keymaps  = require("tmux.keymaps")
 local nvim     = require("tmux.wrapper.nvim")
-local options  = require("tmux.configuration").options
+local options  = require("tmux.configuration.options")
 local tmux     = require("tmux.wrapper.tmux")
 
 --return true if there is no other nvim window in the direction of @border

@@ -1,7 +1,7 @@
 local layout   = require("tmux.layout")
 local log      = require("tmux.log")
 local nvim     = require("tmux.wrapper.nvim")
-local options  = require("tmux.configuration").options
+local options  = require("tmux.configuration.options")
 local tmux     = require("tmux.wrapper.tmux")
 
 local opposite_directions = {
@@ -22,7 +22,7 @@ function M.has_tmux_target(direction)
     if not layout.is_border(direction) then
         return true
     end
-    return options.navigation.cycle_navigation and not layout.is_border(opposite_directions[direction])
+    return options.navigation.cycle_navigation or not layout.is_border(opposite_directions[direction])
 end
 
 function M.to(direction)

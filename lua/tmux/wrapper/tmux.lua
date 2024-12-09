@@ -60,17 +60,13 @@ local M = {
     file_exists    = file_exists,
 }
 
-function M.setup(options)
+function M.setup()
     M.is_tmux = get_tmux() ~= nil
 
     log.debug(M.is_tmux)
 
     if not M.is_tmux then
         return false
-    end
-
-    if file_exists(options.tmux.conf) == false then
-        vim.notify("Does not exist " .. options.tmux.conf)
     end
 
     M.version = get_version()

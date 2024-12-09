@@ -4,8 +4,8 @@ local options   = require("tmux.configuration.options")
 local validate  = require("tmux.configuration.validate")
 local tmux      = require("tmux.wrapper.tmux")
 
-local M     = {
-	options     = options,
+local M = {
+	options = options,
 	--  logging     = logging,
 }
 
@@ -15,7 +15,9 @@ function M.setup(opts) --  function M.setup(opts, logs)
     --  print("tmux.configuration.init.setup:logging", vim.inspect(M.options.logging))
     log.debug("logging configuration injected:\n", M.options.logging)
     --  M.logging.set(vim.tbl_deep_extend("force", {}, M.logging, opts.logging or {}))
-    opts.logging = logging.set(vim.tbl_deep_extend("force", {}, opts.logging or {}))
+    --  Done in upper init
+    --  opts.logging = logging.set(vim.tbl_deep_extend("force", {}, opts.logging or {}))
+
     --  print("tmux.configuration.init.setup:logging", vim.inspect(M.options.logging))
 
     log.debug("options configuration injected:\n", opts)

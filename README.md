@@ -1,6 +1,10 @@
 # tmux.nvim
 
-1.  In this version of tmux.nvim, in theory any single key can be used as a prefix key without breaking the existing definition of that key in most modes - this means that the framework is designed to be orthogonal, and these keys can work independently without the help of Ctrl/Alt or other sticky keys. There is indeed a switch variable (one_key_prefix) in the settings file that swaps a given pair of prefix and auxiliary keys. You need to reload the tmux settings file to switch, and restart the editor when redefining the keys - people can try different combinations and settle on a comfortable pattern for a while.
+
+
+<details><summary>1.  Any single key can be used as a prefix key without breaking the existing definition of that key</summary>
+
+    In theory any single key can be used as a prefix key without breaking the existing definition of that key in most modes in this version of tmux.nvim. This means that the framework is designed to be orthogonal, and these keys can work independently without the help of Ctrl/Alt or other sticky keys. There is indeed a switch variable (one_key_prefix) in the settings file that swaps a given pair of prefix and auxiliary keys. People can try different combinations and settle on a comfortable pattern for a while.
 
     The implementation principle is based on tmux's ability to dynamically disable and enable keyboard bindings: that is, it implements new functions by dynamically expanding the unused pattern space while respecting the original function definitions for specific modes.
 
@@ -12,7 +16,15 @@
 
     This design insists on decoupling editor/terminal and tmux. Don't worry about them affecting each other.
 
-2.  Automatic clipboard synchronization between nvim and tmux. You can copy content from mvim to the terminal in tmux without switching to tmux's copy mode. This is very useful for complex and long text copying. Especially for pure tty editing, this is almost the most reasonable choice.
+    An instance of the framework.
+
+    You can use Escape as the prefix key exclusively and not use other keys to switch tmux working modes.
+
+    The reason I prefer to bind Escape to the tmux prefix key by default is that I need the most reasonable key to exit the terminal input mode. Escape is "non-intrusive" for most modes-it does not produce actual output, which is the rationale for its existence. The result of pushing it to the extreme is that I tend to use Escape as the prefix key exclusively to solve the hotkey requirements of most tmux application occasions (in most cases, the auxiliary prefix key is not necessary). Don't worry about the editor's Escape function, the tmux prefix function is designed to be above the normal mode (you can of course change this setting if you think it is a wrong design). Fortunately, the above implementation of this plugin provides the premise for realizing these ideas. Please refer to the one_stage_policy defined in the configuration file header.conf for the implementation of this feature.
+</details>
+<details><summary>2.  Automatic clipboard synchronization between nvim and tmux</summary>
+
+    Automatic clipboard synchronization between nvim and tmux. You can copy content from mvim to the terminal in tmux without switching to tmux's copy mode. This is very useful for complex and long text copying. Especially for pure tty editing, this is almost the most reasonable choice.
 
     On NVIM v0.10.1, the file [clipboard.vim](/usr/share/nvim/runtime/autoload/provider/clipboard.vim) has done most of the work on the editor side.
 
@@ -20,12 +32,40 @@
 
     Through [<b>tmux's system clipboard settings</b>](https://github.com/trailblazing/tmux/blob/main/tmux.conf), you can copy content to the system clipboard while copying to tmux in this combined environment without relying on the editor's association with the system clipboard.
 
-    Once this plugin works, there is no need for ctrl-shift-{c, v} in the terminal inside tmux, nor the help of the mouse, even when coding in a GUI environment.
+    Once this plugin works, there is no need for ctrl-shift-c (if you are in a chroot or root user environment, you may still need ctrl-shift-v) in the terminal inside tmux, nor the help of the mouse, even when coding in a GUI environment.
 
     There is a vim-tmux-clipboard, but they are slightly [different](https://github.com/trailblazing/dotconfig/blob/master/init/editor/nvim/lua/plugins/core.lua).
 
+</details>
+
+Not interested in reading the instructions before trying it out?
+
+Please ignore the text instructions outside the code, just try to load these settings and experience the results.
+
+By default, the Escape key is the shortcut key to enter different tmux working modes.
+
+<details><summary>It is infrastructure rather than an application</summary>
+
+
+Only if you are ready to work in a tmux-related environment for a long time, will you be interested in changing its default settings.
+
+It is guaranteed to work in tty mode by default -- that is, it must be available in extreme cases. 
+
+In actual use, this setting tends to be minimalist.
+
+That is, by default it will try to turn off all tmux visual elements as soon as possible
+
+-- it only reflects itself as a specific environmental factor when necessary, such as background color or some controls
+
+-- you know it is there, you don't need to see it all the time. It is infrastructure rather than an application. 
+
+When we focus on our work, everything that is redundant to the current context should disappear.
+
+</details>
+
 Based on the above scenario, I am happy to fork tmux.nvim, You are very welcome to improve these designs and provide feedback.
 
+To facilitate discussion, I have established a [network community](https://t.me/tmuxer), and friends who are interested are welcome to join :)
 
 ## Installation
 
@@ -56,7 +96,8 @@ return {
 				redirect_to_clipboard = false, -- default
 			},
 			tmux    = {
-				conf    = os.getenv("HOME") .. "/.tmux.conf",
+				--  Reference implementation. Not essential to this plugin
+				conf    = os.getenv("XDG_CONFIG_HOME") .. "/tmux/tmux.conf",
 				header  = os.getenv("XDG_CONFIG_HOME") .. "/tmux/header.conf",
 			},
 			prefix  = {
@@ -67,7 +108,7 @@ return {
 				--  The background color value indicating entering copy-mode when nvim background is dark
 				normal_background   = "colour003",
 				--  The background color value indicating entering prefix "mode" when vim background is light
-				prefix_bg_on_light  = "#d7d700",
+				prefix_bg_on_light  = "#d7d7ff",
 				--  The background color value indicating entering copy-mode when nvim background is light
 				normal_bg_on_light  = "colour003",
 			},
@@ -85,36 +126,41 @@ return {
 				notify  = "disabled", -- not default
 			},
 		}
-		return require("tmux").setup(opts, logging)
+		require("tmux").setup(opts)
 	end
 }
 ```
-Besides the bindings in nvim (done by this plugin) you need to add configuration to [.tmux.conf](https://github.com/trailblazing/tmux/blob/main/tmux.conf).
+Besides the bindings in nvim (done by this plugin) you need to add configuration to [tmux.conf](https://github.com/trailblazing/tmux/blob/main/tmux.conf).
+
 Because you want ot enable these functions before an editor's exists.
 ```tmux
-#   Tmux .conf files that need to be inserted into the default tmux.conf, $XDG_CONFIG_HOME/tmux == $DOT_CONFIG/terminal/tmux
-%if '[ -s "$XDG_CONFIG_HOME/tmux/header.conf" ]'
+#   Tmux .conf files that need to be inserted into the default tmux.conf
     source "$XDG_CONFIG_HOME/tmux/header.conf"
-%endif
-
-%if '[ -s "$XDG_CONFIG_HOME/tmux/prefix.conf" ]'
     source "$XDG_CONFIG_HOME/tmux/prefix.conf"
-%endif
-
-%if '[ -s "$XDG_CONFIG_HOME/tmux/wincmd.conf" ]'
     source "$XDG_CONFIG_HOME/tmux/wincmd.conf"
-%endif
-
-%if '[ -s "$XDG_CONFIG_HOME/tmux/navigation.conf" ]'
     source "$XDG_CONFIG_HOME/tmux/navigation.conf"
-%endif
-
-%if '[ -s "$XDG_CONFIG_HOME/tmux/resize.conf" ]'
     source "$XDG_CONFIG_HOME/tmux/resize.conf"
-%endif
-
 ```
-One variable switch prefix key and assistant prefix key in [header.conf](https://github.com/trailblazing/tmux/blob/main/header.conf).
+<details><summary>If you want to change the default prefix keys</summary>
+
+Finding the following code inside [header.conf](https://github.com/trailblazing/tmux/blob/main/header.conf)
+
+```tmux
+%if    "#{one_key_prefix}"
+    %hidden prefix_key="Escape"
+    %hidden normal_key="`"
+%else
+    %hidden normal_key="Escape"
+    %hidden prefix_key="`"
+%endif
+```
+and change to your preferences. Press 'r' under the tmux copy-mode will reload the tmux configuration if you use this [tmux.conf](https://github.com/trailblazing/tmux/blob/main/tmux.conf).
+</details>
+
+<details><summary>One variable switch prefix key and assistant prefix key</summary>
+
+In [header.conf](https://github.com/trailblazing/tmux/blob/main/header.conf).
+
 ```tmux
 #   #AA0000 Binding prefix_key to Escape
     %hidden one_key_prefix=1
@@ -128,24 +174,18 @@ If you want to use Escape as a copy-mode initiator, the above code will become t
 #   #00AAAA Binding normal_key to Escape
     %hidden one_key_prefix=0
 ```
-Do not worry about Escape's functions of the editor, tmux prefix functions are on top of normal mode by design.
+</details>
 
-The reason I bind Escape to tmux prefix key by defaut is because I need a most reasonable key to quit the terminal input mode.
+<details><summary>If you want to use Escape exclusively as the prefix key (no auxiliary keys required)</summary>
+
+In [header.conf](https://github.com/trailblazing/tmux/blob/main/header.conf).
+
+```tmux
+    %hidden one_stage_policy=
+```
+</details>
 
 If you have no conflicting setup, that is it.
-
-If you want to change the default prefix keys, finding the following code inside [header.conf](https://github.com/trailblazing/tmux/blob/main/header.conf)
-```tmux
-%if    "#{one_key_prefix}"
-    %hidden prefix_key="Escape"
-    %hidden normal_key="`"
-%else
-    %hidden normal_key="Escape"
-    %hidden prefix_key="`"
-%endif
-```
-and change to your preferences. Press 'r' under the tmux copy-mode will reload the tmux configuration if you use this
-[tmux.conf](https://github.com/trailblazing/tmux/blob/main/tmux.conf).
 
 
 ## Usage
@@ -160,9 +200,12 @@ The plugin scripts are working in the following environment:
 
 But I don't think it's necessary.
 
+I applied the latest patches and deliberately kept compatibility with related bugs in similar versions (tmux 3.4-3.5a) -- that is, it applies to these different versions at the same time. However, I strongly recommend upgrading to the latest version of tmux, because the cost of maintaining compatibility may be uncontrollable -- it will inevitably lead to code bloat and error hiding.
+
+
 ## Configuration
 
-The config step is only necessary to overwrite configuration defaults.
+<details><summary>The config step is only necessary to overwrite configuration defaults.</summary>
 
 The following defaults are given:
 
@@ -204,7 +247,9 @@ The following defaults are given:
 	},
 
 	tmux = {
-		conf = os.getenv("HOME") .. "/.tmux.conf",
+		--  conf = os.getenv("HOME") .. "/.tmux.conf",
+		--  Reference implementation. Not essential to this plugin
+		conf    = os.getenv("XDG_CONFIG_HOME") .. "/tmux/tmux.conf",
 		header  = os.getenv("XDG_CONFIG_HOME") .. "/tmux/header.conf",
 	},
 
@@ -214,11 +259,11 @@ The following defaults are given:
 		--  escape_key  = 'Escape',  --  Single key prefix trigger
 		--  assist_key  = '',        --  Single key copy-mode trigger
 		--  The background color value indicating entering prefix "mode" when vim background is dark
-		prefix_background   = "colour007",
+		prefix_background   = "#00d7d7",
 		--  The background color value indicating entering copy-mode when nvim background is dark
 		normal_background   = "colour003",
 		--  The background color value indicating entering prefix "mode" when vim background is light
-		prefix_bg_on_light  = "colour006",
+		prefix_bg_on_light  = "#d7d7ff",
 		--  The background color value indicating entering copy-mode when nvim background is light
 		normal_bg_on_light  = "colour003",
 	},
@@ -253,9 +298,12 @@ The following defaults are given:
 	},
 }
 ```
+</details>
 
 
 ### Copy sync
+
+<details><summary></summary>
 
 Copy sync uses tmux buffers as master clipboard for `*`, `+`, `unnamed`, and `0` - `9` registers. The sync does NOT rely on temporary files and works just with the given tmux API. Thus, making it less insecure :). The feature enables a nvim instace overarching copy/paste process! yank/dd in one nvim instance, switch to the second and p the copies/deletes.
 
@@ -266,15 +314,29 @@ This has some downsites, on really slow machines, calling registers or pasting w
 To redirect copies (and deletes) to clipboard, tmux must have the capability to do so. The plugin will just set -w on set-buffer. If your tmux need more configuration check out [tmux-yank](https://github.com/tmux-plugins/tmux-yank) for an easy setup.
 
 Ignoring buffers must have the form of `buffer_name = true` to enable an unsorted list in lua. This enhances the performance of checks - if a buffer is ignored or not - meaningfull.
+</details>
 
 ### Prefix
 
-Sourcing [`$XDG_CONFIG_HOME/tmux/header.conf`](https://github.com/trailblazing/tmux/blob/main/header.conf) and [`$XDG_CONFIG_HOME/tmux/prefix.conf`](https://github.com/trailblazing/tmux/blob/main/prefix.conf) in the [`~/.tmux.conf`](https://github.com/trailblazing/tmux/blob/main/tmux.conf) to enable prefix functions:
+<details><summary>Sourcing "header.conf", "prefix.conf", and "wincmd.conf" to enable prefix functions</summary>
+
+In the [`$XDG_CONFIG_HOME/tmux/tmux.conf`](https://github.com/trailblazing/tmux/blob/main/tmux.conf),
+
+```tmux
+    source "$XDG_CONFIG_HOME/tmux/header.conf"
+    source "$XDG_CONFIG_HOME/tmux/prefix.conf"
+    source "$XDG_CONFIG_HOME/tmux/wincmd.conf"
+```
+</details>
 
 ### Navigation
 
-Sourcing [`$XDG_CONFIG_HOME/tmux/navigation.conf`](https://github.com/trailblazing/tmux/blob/main/navigation.conf) in the [`~/.tmux.conf`](https://github.com/trailblazing/tmux/blob/main/tmux.conf) to enable navigation functions:
+<details><summary>Sourcing "navigation.conf" to enable navigation functions</summary>
 
+In the [`$XDG_CONFIG_HOME/tmux/tmux.conf`](https://github.com/trailblazing/tmux/blob/main/tmux.conf),
+```tmux
+    source "$XDG_CONFIG_HOME/tmux/navigation.conf"
+```
 "cycle-free" navigation beyond nvim is enabled by default in  [`$XDG_CONFIG_HOME/tmux/navigation.conf`](https://github.com/trailblazing/tmux/blob/main/navigation.conf):
 ```tmux
     %hidden disable_navigation_cycle=''
@@ -291,7 +353,15 @@ You can change the above settings in your navigation.conf to the following to di
     %hidden disable_navigation_cycle='on'
     setenv -gh  disable_navigation_cycle $disable_navigation_cycle
 ```
+Available options for the plugin and their defaults are (if you use the defaults, these options are already inside navigation.conf)
+```tmux
+# navigation.conf
+    %hidden  navigation_left='C-h'
+    %hidden  navigation_down='C-j'
+    %hidden    navigation_up='C-k'
+    %hidden navigation_right='C-l'
 
+```
 To run custom bindings in nvim, make sure to set `enable_default_keybindings` to `false` in [tmux.lua](https://github.com/trailblazing/dotconfig/blob/master/init/editor/nvim/lua/plugins/tmux.lua). The following definitions (in [navigation.lua](https://github.com/trailblazing/tmux.nvim/blob/main/lua/tmux/navigation/init.lua)) are used to navigate around windows and panes
 
 ```lua
@@ -306,10 +376,32 @@ To run custom bindings in nvim, make sure to set `enable_default_keybindings` to
 	["<C-w>l"]  = [[<cmd>lua require'tmux'.move_right()<cr>]],
 }
 ```
+</details>
 
 ### Resize
 
-Sourcing [`$XDG_CONFIG_HOME/tmux/resize.conf`](https://github.com/trailblazing/tmux/blob/main/resize.conf) in the [`~/.tmux.conf`](https://github.com/trailblazing/tmux/blob/main/tmux.conf) to enable resize functions:
+<details><summary>Sourcing "resize.conf" to enable resize functions</summary>
+
+In the [$XDG_CONFIG_HOME/tmux/tmux.conf](https://github.com/trailblazing/tmux/blob/main/tmux.conf),
+
+```tmux
+    source "$XDG_CONFIG_HOME/tmux/resize.conf"
+```
+
+Available options for the plugin and their defaults are (if you use the defaults, these options are already inside resize.conf):
+
+
+```tmux
+# resize.conf
+    %hidden   resize_left='M-h'
+    %hidden   resize_down='M-j'
+    %hidden     resize_up='M-k'
+    %hidden  resize_right='M-l'
+    %hidden resize_step_x=5
+    %hidden resize_step_y=2
+
+```
+
 
 The implemented lua scripts of the plugin ensure the key bindings of nvim match the defined bindings in the resize.conf. Otherwise the pass through will not have the seamless effect!
 
@@ -324,68 +416,62 @@ To run custom bindings in nvim, make sure to set `enable_default_keybindings` to
 	["<A-l>"] = [[<cmd>lua require'tmux'.resize_right()<cr>]],
 }
 ```
+</details>
 
-## Tpm
+## Tpm -- deprecated
+<details><summary></summary>
 
-If you prefer [tmux plugin manager](https://github.com/tmux-plugins/tpm) (it is not necessary), you can add the following plugin.
+Why not use tpm: Shell scripts cannot easily control tmux. No need to expand the dependency set to bash when posix shell is sufficient, while ensuring availability in extreme cases. Plugin settings may conflict with the user's original settings and need to be adjusted manually.
+
+~~If you prefer [tmux plugin manager](https://github.com/tmux-plugins/tpm) (it is not necessary), you can add the following plugin.~~
+
 
 ```tmux
 set -g @plugin 'trailblazing/tmux.nvim'
-
 run '~/.tmux/plugins/tpm/tpm'
 ```
 
-Available options for the plugin and their defaults are (if you use the defaults, these options are already inside navigation.conf/resize.conf):
 
-```tmux
-# navigation.conf
-    %hidden  navigation_left='C-h'
-    %hidden  navigation_down='C-j'
-    %hidden    navigation_up='C-k'
-    %hidden navigation_right='C-l'
+</details>
 
-```
-```tmux
-# resize.conf
-    %hidden   resize_left='M-h'
-    %hidden   resize_down='M-j'
-    %hidden     resize_up='M-k'
-    %hidden  resize_right='M-l'
-    %hidden resize_step_x=5
-    %hidden resize_step_y=2
-
-```
 
 ## Troubleshoot
 
-### Window switching stops working in python virtual environment
+<details><summary>### Window switching stops working in python virtual environment</summary>
 
 > [christoomey/vim-tmux-navigator#295](https://github.com/christoomey/vim-tmux-navigator/issues/295)
 
 To enable searching for nvim in subshells, you need to change the 'is_vim' part in the tmux plugin. This will make searching for nested nvim instances result in positive resolutions.
 
 Found by @duongapollo
+</details>
 
 Since we changed from is_vim to @is-vim, no such issues should occur again. Just make sure @is-vim is set in nvim/vim and
 [tmux.nvim](https://github.com/trailblazing/tmux.nvim) or [keys.vim](https://github.com/trailblazing/keys) is loaded correctly.
 
-### Compatibility with vim-yoink or other yank-related tmux-plugins
+<details><summary>### Compatibility with vim-yoink or other yank-related tmux-plugins</summary>
 
 > [aserowy/tmux.nvim#88](https://github.com/aserowy/tmux.nvim/issues/88)
 
 The configuration in the given issue integrates tmux.nvim with yanky.nvim and which-key.nvim so we get the benefits of all yank-related plugins.
 
 Found by @kiyoon
+</details>
+
 
 ## Contribute
 
 Contributed code must pass [luacheck](https://github.com/mpeterv/luacheck) and be formatted with [stylua](https://github.com/johnnymorganz/stylua). Besides formatting, all tests have to pass. Tests are written for [busted](https://github.com/Olivine-Labs/busted).
 
-If you are using nix-shell, you can start a nix-shell and run `fac` (format and check).
+<details><summary>If you are using nix-shell</summary>
+
+You can start a nix-shell and run `fac` (format and check).
+
 
 ```sh
 stylua lua/ && luacheck lua/ && busted --verbose
 ```
+</details>
 
 ## Inspiration
 
@@ -409,20 +495,16 @@ The following content is no longer fully compliant with the current status. Howe
 
 ## Animations of part of the features
 
-1.1. <details><summary>Normal yanking will sync the content from nvim to tmux </summary>
 
-<a href="https://user-images.githubusercontent.com/8199164/124225235-5f984200-db07-11eb-9cff-ab73be12b4b1.mp4"></a>
+<details><summary><a href="https://user-images.githubusercontent.com/8199164/124225235-5f984200-db07-11eb-9cff-ab73be12b4b1.mp4">1.1. Normal yanking will sync the content from nvim to tmux</a></summary>
 </details>
 
-1.2. <details><summary>Navigating between nvim and tmux panes with the same key bindings </summary>
-
-<a href="https://user-images.githubusercontent.com/8199164/122721161-a026ce80-d270-11eb-9a27-2beff9910e69.mp4"></a>
+<details><summary><a href="https://user-images.githubusercontent.com/8199164/122721161-a026ce80-d270-11eb-9a27-2beff9910e69.mp4">1.2. Navigating between nvim and tmux panes with the same key bindings</a></summary>
 </details>
 
-1.3. <details><summary>Resizing nvim splits and tmux panes with the same key bindings </summary>
-
-<a href="https://user-images.githubusercontent.com/8199164/122721182-a61caf80-d270-11eb-9f75-0dd6343c0cb7.mp4"></a>
+<details><summary><a href="https://user-images.githubusercontent.com/8199164/122721182-a61caf80-d270-11eb-9f75-0dd6343c0cb7.mp4">1.3. Resizing nvim splits and tmux panes with the same key bindings</a></summary>
 </details>
+
 
 
 

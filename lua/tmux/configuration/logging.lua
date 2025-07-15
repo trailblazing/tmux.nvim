@@ -1,8 +1,8 @@
 --  Merged logging into options for compatibility reasons with lazy.nvim
---  local M = {
---      file    = "warning",
---      notify  = "warning",
---  }
+local M = {
+    file    = "warning",
+    notify  = "warning",
+}
 
 function M.set(result, options)
     if options == nil or options == "" then

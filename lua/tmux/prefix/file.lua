@@ -802,14 +802,13 @@ local function init(event)
 	map('n', '<M-' .. restore_key .. '>', function() restore(0) end, { noremap = true })
 	--  map('n', '<Leader>S', function() restore(0) end, { noremap = true })
 	--  map('n', '<Leader>RESTORE', function() restore(0) end, { noremap = true })
-	local reverse_key --  = "REVERSE"
+	local reverse_key = "K"   --  = "REVERSE"
 	--  map('n', 'SETDARK',
-	if assist_key ~= "" then
-		reverse_key = assist_key
-	else
-		reverse_key = "K"
-		--  reverse_key = "REVERSE"
-	end
+	--  if assist_key ~= "" then
+	--  	reverse_key = assist_key   --  this is a bug, alt-assist_key triggers assist_key itself
+	--  else
+	--  	reverse_key = "K"   --  reverse_key = "REVERSE"
+	--  end
 	--  map('n', 'SETDARK',
 	map('n', '<M-' .. reverse_key .. '>', function() reverse(0, "default_background") end, { noremap = true })
 	--  map('n', '<Leader>V', function() reverse(0) end, { noremap = true })
